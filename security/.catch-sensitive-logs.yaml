@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+inheritance: true
+
+reviews:
+  request_changes_workflow: true
+  pre_merge_checks:
+    custom_checks:
+      - name: "catch-sensitive-logs"
+        mode: error
+        instructions: |
+          Fail if ANY log statement could output sensitive data including:
+          - Passwords or password hashes
+          - API keys or secret keys
+          - Authentication tokens (JWT, OAuth, bearer, session tokens)
+          - Social Security Numbers (SSNs)
+          - Payment card data (credit/debit card numbers, CVVs, expiration dates)
+
+          Log functions to inspect across all languages:
+          - Python: print(), logging.*, logger.*
+          - JavaScript/TypeScript: console.log(), console.info(), console.warn(), console.error(), console.debug()
+          - Java/Kotlin: System.out.println(), System.out.print(), System.err.println(), logger.*
+          - Go: fmt.Print(), fmt.Println(), fmt.Printf(), log.Print(), log.Println(), log.Printf()
+          - Any other language-specific logging or print function
+
+          Flag violations when:
+          1. A variable named password, passwd, secret, token, apiKey, api_key,
+             ssn, cardNumber, card_number, cvv, or similar is passed to a log statement.
+          2. A string literal or interpolation contains keywords like "password=",
+             "token=", "api_key=", "ssn=", "card=", or "secret=".
+          3. An object or struct that contains sensitive fields is logged without
+             redaction (e.g., logging an entire user or request object).
+          4. Environment variables referencing secrets (e.g., process.env.API_KEY,
+             os.environ["SECRET"]) are logged.
+
+          If any violation is found, report:
+          - The exact line and log statement
+          - Which sensitive data type is at risk
+          - A suggested fix (e.g., redact the field, remove the log, or mask the value)
